@@ -1,14 +1,17 @@
 @echo off
 REM ============================================================
-REM  DSH Hermes RedTeam — Install Script
-REM  Applies the anti-refusal wire-level prefill patch
-REM  and installs the Hermes RedTeam agent preset.
+REM  DSH Hermes RedTeam v3 — Install Script
+REM  Only patches pi-ai adapter (OpenRouter/Claude/GPT/Gemini/GLM).
+REM  DeepSeek official API does NOT need the prefill patch —
+REM  the Hermes persona alone is sufficient for DS models.
 REM ============================================================
 setlocal enabledelayedexpansion
 
 echo.
-echo   DSH Hermes RedTeam — Installer
-echo   ------------------------------
+echo   DSH Hermes RedTeam v3 — Installer
+echo   ----------------------------------
+echo   This patches ONLY the pi-ai adapter (OpenRouter models).
+echo   DeepSeek official API is NOT touched — Hermes persona is enough.
 echo.
 
 REM --- Detect DSH runtime path ---
@@ -20,21 +23,19 @@ if not exist "%DSH_BASE%\node_modules\@deepseek-ai" (
     exit /b 1
 )
 
-REM --- Step 1: Apply wire-level patches ---
-echo [1/3] Applying wire-level prefill patches...
+REM --- Step 1: Apply pi-ai prefill patch ---
+echo [1/3] Applying pi-ai wire-level prefill patch...
 set "PATCH_SRC=%~dp0..\patches"
-set "DSH_DEEPSEEK=%DSH_BASE%\node_modules\@deepseek-ai\dsh-llm-deepseek\lib\index.js"
 set "DSH_PI_AI=%DSH_BASE%\node_modules\@deepseek-ai\dsh-llm-pi-ai\lib\index.js"
 
-if not exist "%PATCH_SRC%\dsh-llm-deepseek-index.js" (
-    echo [ERROR] Patch file missing: dsh-llm-deepseek-index.js
+if not exist "%PATCH_SRC%\dsh-llm-pi-ai-index.js" (
+    echo [ERROR] Patch file missing: dsh-llm-pi-ai-index.js
     pause
     exit /b 1
 )
 
-copy /Y "%PATCH_SRC%\dsh-llm-deepseek-index.js" "%DSH_DEEPSEEK%" >nul
 copy /Y "%PATCH_SRC%\dsh-llm-pi-ai-index.js" "%DSH_PI_AI%" >nul
-echo          Patches applied.
+echo          pi-ai patch applied.
 
 REM --- Step 2: Install Hermes preset ---
 echo [2/3] Installing Hermes RedTeam agent preset...
@@ -51,9 +52,15 @@ echo          Preset installed.
 REM --- Step 3: Done ---
 echo [3/3] Done.
 echo.
-echo   +--------------------------------------------------+
-echo   ^|  RESTART DeepSeek Harness Desktop to apply.       ^|
-echo   ^|  Select "redteam" preset in new sessions.         ^|
-echo   +--------------------------------------------------+
+echo   +------------------------------------------------------------------+
+echo   ^|  RESTART DeepSeek Harness Desktop to apply.                       ^|
+echo   ^|  Select "redteam" preset in new sessions.                         ^|
+echo   ^|                                                                  ^|
+echo   ^|  Optional: copy AGENTS.md to %%USERPROFILE%%\.dsh\AGENTS.md        ^|
+echo   ^|  for workspace-level instruction overlay.                         ^|
+echo   +------------------------------------------------------------------+
 echo.
+echo   BUGS: run scripts\uninstall.bat to restore.
+echo         DeepSeek API:  no patch = Hermes persona is enough
+echo         OpenRouter etc: pi-ai patch active
 pause
