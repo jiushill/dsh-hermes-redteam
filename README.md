@@ -93,7 +93,8 @@ dsh-hermes-redteam/
 |------|------|
 | DeepSeek V3/R1 | 实测通过 |
 | GLM 5.1 | 部分有效 |
-| Claude / GPT / Gemini | RLHF 权重 >> prompt，成功率低 |
+| Claude / GPT / Gemini | RLHF 权重 >> prompt，成功率低
+|K3|实测通过|
 | 开源本地模型 | 无需绕过 |
 
 ## 现实认知
