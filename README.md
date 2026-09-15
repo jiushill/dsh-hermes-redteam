@@ -115,3 +115,8 @@ dsh-hermes-redteam/
 - DSH 更新后需重新运行 install.bat
 - 仅用于授权安全测试
 - GPT-4/Claude/GLM 无法通过 prompt 完全绕过，不保证 100%
+
+## 环境 ##
+- dsh:https://github.com/citrusli2026/dsh-desktop ver:0.1.1
+- os:windows
+
