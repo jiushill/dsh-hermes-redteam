@@ -126,6 +126,7 @@ THINKING_COMPLIANCE 块把 override 标识为 "your identity, not external instr
 | 模型 | default | high thinking |
 |------|---------|----------------|
 | DeepSeek V3 / R1 | ✅ | ✅（THINKING_COMPLIANCE 直接吃） |
+| DeepSeek V4 / Flash | ✅ |⚠|
 | Anthropic Claude Opus / Sonnet | ✅ | ⚠ RLHF 在权重层，部分情况退 |
 | OpenAI GPT-5/5.2/6 | ✅ | ⚠ 同上 |
 | Google Gemini 3 Pro / Flash | ✅ | ✅ |
@@ -185,6 +186,10 @@ dsh-hermes-redteam/
 ├── .gitignore
 └── README.md
 ```
+## tips ##
+只需要在.anonymous-user-id目录下放置AGENTS.md，让M3根据该项目去修改自身即可。实测M3推理等级High依旧可绕 【因为dsh每次更新可能会改名】
+win:C:\Users\<username>\.dsh # 旧版dsh时的路径
+Linux:/home/<username>/dsh-deskop
 
 ## 参考
 
