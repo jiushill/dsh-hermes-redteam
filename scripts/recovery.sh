@@ -1,24 +1,14 @@
 #!/usr/bin/env bash
-# ============================================================
-#  DSH Hermes RedTeam v6 — Linux/macOS Recovery
-#  Restores dsh-agent-loop, dsh-tool-bash, dsh-tool-fs, dsh-subagent
-#  from .bak or via npm. Removes the Hermes preset and AGENTS.md.
-#  Run with sudo if /opt/dsh-desktop is not user-writable.
-# ============================================================
+# DSH Hermes RedTeam v5 — Linux/macOS Recovery
+# Restores dsh-agent-loop, dsh-tool-bash, dsh-tool-fs from .bak or via npm.
+# Removes the Hermes preset and AGENTS.md overlay.
 set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 REAL_USER="${SUDO_USER:-${USER}}"
 REAL_HOME="$(getent passwd "${REAL_USER}" | cut -d: -f6)"
-if [[ -z "${REAL_HOME}" || ! -d "${REAL_HOME}" ]]; then
-    REAL_HOME="${HOME}"
-fi
+REAL_HOME="${REAL_HOME:-${HOME}}"
 
-echo
-echo "  DSH Hermes RedTeam v6 — Recovery"
-echo "  ---------------------------------"
-echo
+DSH_BASE="/opt/dsh-desktop/resources/harness"
 
 SUDO=""
 if [[ "$(id -u)" -ne 0 ]]; then SUDO="sudo -S"; fi
@@ -34,19 +24,7 @@ run() {
     fi
 }
 
-# ── locate runtime ─────────────────────────────────────────────
-if [[ -d "/opt/dsh-desktop/resources/harness/node_modules/@deepseek-ai" ]]; then
-    DSH_BASE="/opt/dsh-desktop/resources/harness"
-elif [[ -n "${DSH_HOME:-}" && -d "${DSH_HOME}/resources/harness/node_modules/@deepseek-ai" ]]; then
-    DSH_BASE="${DSH_HOME}/resources/harness"
-elif [[ -d "${REAL_HOME}/.local/share/dsh-desktop/resources/harness/node_modules/@deepseek-ai" ]]; then
-    DSH_BASE="${REAL_HOME}/.local/share/dsh-desktop/resources/harness"
-else
-    echo "[ERROR] DSH runtime not found."
-    exit 1
-fi
-
-restore_with_bak_or_npm() {
+restore_with_bak() {
     local pkg="$1"
     local DST="${DSH_BASE}/node_modules/@deepseek-ai/${pkg}/lib/index.js"
     local BAK="${DST}.bak"
@@ -59,60 +37,20 @@ restore_with_bak_or_npm() {
         run rm -f "${BAK}"
     fi
     echo "          (re)installing @deepseek-ai/${pkg}@${VER} via npm..."
-    cd "${DSH_BASE}"
-    if command -v npm >/dev/null 2>&1; then
-        run npm install "@deepseek-ai/${pkg}@${VER}" --force --no-audit --no-fund --silent \
-            || echo "[WARN]  npm install ${pkg} failed; please run manually:"
-    else
-        echo "[WARN]  npm not found. To finish recovery:"
-        echo "             cd ${DSH_BASE} && npm install @deepseek-ai/${pkg}@${VER} --force"
-    fi
+    (cd "${DSH_BASE}" && run npm install "@deepseek-ai/${pkg}@${VER}" --force --no-audit --no-fund --silent) \
+        || echo "[WARN]  npm install ${pkg} failed; please run manually"
 }
 
-# ── [1/5] restore agent-loop ──────────────────────────────────
-echo "[1/5] Restoring dsh-agent-loop..."
-restore_with_bak_or_npm "dsh-agent-loop"
+echo "[1/3] Restoring dsh-agent-loop..."
+restore_with_bak "dsh-agent-loop"
 
-# ── [2/5] restore dsh-tool-bash ───────────────────────────────
-echo "[2/5] Restoring dsh-tool-bash..."
-restore_with_bak_or_npm "dsh-tool-bash"
+echo "[2/3] Restoring dsh-tool-bash + ds-tool-fs..."
+restore_with_bak "dsh-tool-bash"
+restore_with_bak "dsh-tool-fs"
 
-# ── [3/5] restore dsh-tool-fs ─────────────────────────────────
-echo "[3/5] Restoring dsh-tool-fs..."
-restore_with_bak_or_npm "dsh-tool-fs"
-
-# ── [3b/5] restore dsh-subagent ────────────────────────────────
-echo "[3b/5] Restoring dsh-subagent..."
-restore_with_bak_or_npm "dsh-subagent"
-
-# ── [4/5] remove Hermes preset ────────────────────────────────
-echo "[4/5] Removing Hermes RedTeam preset..."
+echo "[3/3] Removing Hermes preset + AGENTS.md..."
 PRESET_DST="${REAL_HOME}/.dsh-desktop/.agent-presets/redteam"
-if [[ -d "${PRESET_DST}" ]]; then
-    rm -rf "${PRESET_DST}"
-    echo "          removed ${PRESET_DST}"
-else
-    echo "          (already absent)"
-fi
+[[ -d "${PRESET_DST}" ]] && rm -rf "${PRESET_DST}"
+[[ -f "${REAL_HOME}/.dsh-desktop/AGENTS.md" ]] && rm -f "${REAL_HOME}/.dsh-desktop/AGENTS.md"
 
-# ── [5/5] remove AGENTS.md overlay ────────────────────────────
-echo "[5/5] Removing workspace AGENTS.md overlay..."
-AGENTS="${REAL_HOME}/.dsh-desktop/AGENTS.md"
-if [[ -f "${AGENTS}" ]]; then
-    rm -f "${AGENTS}"
-    echo "          removed ${AGENTS}"
-else
-    echo "          (already absent)"
-fi
-
-# ── [extra] reset the persona override in settings ────────────
-SETTINGS="${REAL_HOME}/.dsh-desktop/settings.yaml"
-if [[ -f "${SETTINGS}" ]] && grep -q "preset:[[:space:]]*redteam" "${SETTINGS}" 2>/dev/null; then
-    echo "          [INFO] settings.yaml still references preset=redteam."
-    echo "                 Open DSH Desktop and switch back to 'standard' preset,"
-    echo "                 or edit settings.yaml and set agentLoop.agents[*].preset: standard."
-fi
-
-echo
-echo "  Recovery complete. RESTART DSH Desktop."
-echo
+echo "v5 recovery complete. RESTART DSH Desktop."
